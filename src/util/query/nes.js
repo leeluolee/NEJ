@@ -651,18 +651,23 @@
       }
       return siblingCheck(ap[i], bp[i]);
     };
+
   function siblingCheck(a, b) {
-      if (a && b) {
-        var cur = a.nextSibling;
-        while (cur) {
-          if (cur === b) {
-            return -1;
-          }
-          cur = cur.nextSibling;
+    if (a && b) {
+      var cur = a.nextSibling;
+      while (cur) {
+        if (cur === b) {
+          return -1;
         }
+        cur = cur.nextSibling;
       }
-      return a ? 1 : -1;
-    };
+    }
+    return a ? 1 : -1;
+  };
+
+  function uniqueSort(nodeList){
+    return distinct(nodeList.sort(sortor))
+  };
 
   // ### nth position Cache 部分
   // 对于nth类型的查找，有时候一次节点查找会遍历到多次相同节点，
@@ -1069,16 +1074,14 @@
         var data = datas[i],
           dlen = data.length,
           last = data[dlen - 1],
-          result = getTargets(data, context)
-          if(result&&result.length) notNullResult++
+          result = getTargets(data, context);
+
+          if(result && result.length) notNullResult++
           results = results.concat(result)
       }
       clearNthPositionCache()
       if (!results.length) return results
-      if (notNullResult > 1){
-        results.sort(sortor)
-        distinct(results)
-      }
+      if(notNullResult) uniqueSort(results)
       return results
     }
     // API : 测试用get相当于all (private)
@@ -1117,7 +1120,7 @@
       var nodeList
       if (supportQuerySelector && !nes.debug) {
         try {
-          nodeList = (context || doc).querySelectorAll(sl);
+          nodeList = toArray((context || doc).querySelectorAll(sl));
         } catch (e) {
           nodeList = get(sl, context);
         }
@@ -1229,6 +1232,9 @@
   // 1. `pesudos`
   // 2. `operators`
   // 3. `combos`
+
+  nes.uniqueSort = uniqueSort
+
 
   //          5.Exports
   // ----------------------------------------------------------------------
