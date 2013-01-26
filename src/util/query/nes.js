@@ -1138,6 +1138,7 @@
     //
     // 注: 由于:not与:matches依赖于这个函数 ,所以同样支持复杂选择器
   function matches(node, sl) {
+      if(!node || node.nodeType !== 1) return false
       var datas = parse(sl),
         len = datas.length
       if (!datas[len - 1][0]) return false
@@ -1233,7 +1234,9 @@
   // 2. `operators`
   // 3. `combos`
 
-  nes.uniqueSort = uniqueSort
+  nes._uniqueSort = uniqueSort;
+  nes._cleanSelector = clean;
+  nes._getUid= getUid;
 
 
   //          5.Exports

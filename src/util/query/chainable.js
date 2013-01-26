@@ -1,7 +1,6 @@
 /*
  * ------------------------------------------
- * 利用NEJ原有API包装成链式调用风格API，
- * @version  0.1
+ * 利用NEJ原有API包装成链式调用风格API， * @version  0.1
  * @author hzzhenghaibo
  * ------------------------------------------
  */
@@ -10,7 +9,8 @@ var f = function() {
     var _ = NEJ.P,
         _e = _("nej.e"),
         _v = _("nej.v"),
-        _u = _("nej.u");
+        _u = _("nej.u"),
+        $ = _("nej.$");
 
     // local vars
     var _slice = [].slice,
@@ -18,7 +18,7 @@ var f = function() {
         _de = "documentElement",
         _docElem = _doc[_de],
         // 节点集去重排序
-        _unique = nes.uniqueSort;
+        _uniqueSort = nes.uniqueSort;
 
 
     // 简单扩展
@@ -27,6 +27,16 @@ var f = function() {
         if (_o1[_i] == null || _override) _o1[_i] = _o2[_i];
       }
     };
+
+    var _merge = function(_list1 ,_list2){
+        var _i = 0,
+            _j = -1;
+
+        for( ;_list2[_j] !== undefined; _i++){
+            _list1[_i] = _list2[_j++];
+        }
+        _list1.length = _j;
+    }
     /**
      * 扩展原型
      * @param  {} _name    [description]
@@ -35,6 +45,7 @@ var f = function() {
      * @return {[type]}
      */
     var _implement = function(_name, _method, _options){
+        _options = _options || {};
         var _self = this;
         if(_u._$isObject(_name)){
             _u._$forIn(_name, function(_m, _n){
@@ -44,7 +55,7 @@ var f = function() {
             var _hooks = this._hooks,
                 _self = this;
             this.fn[_name] = _method;
-            if(!_options.noHook && _hooks && _hooks.length){
+            if(_hooks && _hooks.length){
                 _u._$forEach(_hooks, function(_hook){
                     _hook(_name, _method, _options)
                 });
@@ -196,6 +207,16 @@ var f = function() {
      * @type {Object}
      */
     var _acceptList = {
+        "copy":{
+            "e":["addClassName", "delClassName", "hasClassName"]
+        },
+        "map":{
+            "e":{
+                "addClass": "addClassName",
+                "delClass": "delClassName",
+                "hasClass": "hasClassName"
+            }
+        },
         "e" : [//class相关
             "addClassName", "delClassName", "hasClassName", "replaceClassName", "toggle",// class相关
             //css相关
