@@ -1,6 +1,9 @@
-var perfTest = function(fn, args, host ){
+var perfTest = function(fn, times){
     var date =  +new Date()
-    fn.apply(host, (args||[]))
+    times = times || 0;
+    for(var i = 0;i< times;i++){
+        fn()
+    }
     console.log(+new Date - date)
 }
 var f = function() {
@@ -11,7 +14,6 @@ var f = function() {
             _u = _("nej.u"),
             _v = _("nej.v"),
             $ = _('nej.$');
-
 
         test('NodeList initialize', function() {
 
@@ -29,6 +31,9 @@ var f = function() {
 
             deepEqual($("#chainable li:nth-child(2n+1)")._$get(), nes.all("#chainable li:nth-child(2n+1)"), "_$get返回真实数组")
             deepEqual($("#chainable li:nth-child(2n+1)")._$get(1), nes.all("#chainable li:nth-child(2n+1)")[1], "传入下标，_$get返回数组中的值")
+
+            ok(!Function.prototype.splitProcee, "原型修复splitProcess")
+            ok(!Function.prototype.autoSet, "原型修复autoSet")
         })
 
         test('NodeList implement', function() {
@@ -81,7 +86,29 @@ var f = function() {
         
 
         module("NEJ 方法merge")
+        test("_$style 和 _$attr", function(){
+            $style = $("#nej .style");
+            $attr = $("#nej .attr"); 
 
+            $style._$style("width", "80px");
+            equal($style._$style("width"), "80px", "style get与set down"); 
+
+            $style._$style({
+                 height: "80px",
+                 width: "40px",
+                 backgroundColor:"#ccc"
+            });
+            deepEqual($style._$style(["height", "width"]),{"height":"80px","width":"40px"}, "style 多重getter与setter down")
+
+            $attr._$attr("title", "haha")
+            equal($attr._$attr("title"), "haha", "attr get与set down"); 
+            $attr._$attr({
+                 title: "title",
+                 rel:"link"
+            });
+            deepEqual($attr._$attr(["title", "rel"]),{"title":"title","rel":"link"}, "attr 多重getter与setter down")
+
+        });
         test("nej方法merge", function(){
              var _list =  [//class相关
             "addClassName", "delClassName", "hasClassName", "replaceClassName", "toggle",// class相关
@@ -104,7 +131,7 @@ var f = function() {
             equal(num, _list.length, "全部方法merge")
         })
 
-        module("API: base")
+        module("Base:过滤、逻辑")
         test("_$fiter、_$map、_$forEach", function() {
             deepEqual(nes.all("#chainable li:nth-child(even)"), $("#chainable li")._$filter(":nth-child(even)")._$get(), "fitler 可传入 选择器")
             var _res = $("#chainable li")._$filter(function(_node, _index) {
@@ -118,7 +145,7 @@ var f = function() {
             })
             deepEqual(nes.all("#chainable li:nth-child(odd)"), _res, "fitler 可以传入 函数");
         })
-        module("API: 遍历")
+        module("节点遍历")
         test("_$prev、_$next、_$parent、_$children ", function() {
            var _res = $("#chainable li")._$next(":nth-child(odd)", true)._$get();
            deepEqual(_res, nes.all("#chainable li ~ :nth-child(odd)"), "_$next all 成功返回")
@@ -145,11 +172,10 @@ var f = function() {
            // 全部兄弟元素
            var _siblings = $("#chainable li:last-child")._$siblings("li")._$sort()._$get();
 
-           deepEqual(_siblings,nes.all("#chainable li:not(:last-child)"), "siblings会选择所有满足选择器的兄弟节点(但不包括li)");
+           deepEqual(_siblings, nes.all("#chainable li:not(:last-child)"), "siblings会选择所有满足选择器的兄弟节点(但不包括li)");
 
 
-
-           var _children = $("#chain2")._$children("ul.u1, ul.u2")._$get()
+           var _children = $("#chain2")._$children("ul")._$get()
            deepEqual(_children, nes.all("#chain2 > ul"), "可以取到直接子节点");
 
            var _children = $("#chain2")._$children("li:first-child")._$get()
@@ -159,6 +185,7 @@ var f = function() {
            var _children = $("#chain2")._$children("li:first-child", true)._$get()
            deepEqual(_children, nes.all("li:first-child", nes.one("#chain2")))
         })
+        module("事件Event")
         test("Events: base _$on, $off, $trigger", function() {
             var _locals = {"0":0}
             var _handle1 = function(e){_locals[0]++;}//每次递增1
@@ -195,48 +222,99 @@ var f = function() {
             var _prev = _locals[0]
         })
 
-        test("Events: delegate enhance", function(){
-            expect(0)
-            // //@UI: TEST, 点击一次后移除
-            // $($node)._$on("click", "li:nth-child(3n)", function(){
-            //     alert("触发li:nth-child(3n) click, 再次点击不再触发")
-            //     $node._$off("click", "li:nth-child(3n)")
-            // });
-            // // @ui: 事件
-            // $node._$on("mouseover mouseout","li:nth-child(5n)", function(_e){
-            //     this._trigger = !this._trigger
-            //     if(this._trigger){
-            //         $(this)._$style({
-            //             "border":"3px dotted #333"
-            //         })._$text("可以通过mouseover或者mousedown,li:nth-child(5n)")
-            //     }else{
-            //         $(this)._$setstyle("border", "none");
-            //     }
-            // })
-            // var _id = 0;
-            // var _tmphandle = function(){
-            //     $(this)._$text(_id++)
-            // }
-            // $node._$on("mouseover mouseout","li",_tmphandle)             // 也可以解除单个选择器的绑定绑定
-            // $node._$off("mouseover mouseout","li", _tmphandle)
+        test("_$click、_$dblclick....", function(){
+            var $node = $("#event");
+            var _locals = [0]
+            var _methods = ("click dbclick blur change focus focusin focusout keydown keypress"+ 
+        "keyup mousedown mouseover mouseup mousemove mouseout scroll select submit").split(" ");
 
-            // // 甚至你可以这样
+            _u._$forEach(_methods, function(_method, _index){
+                ok(typeof $node["_$"+_method] === "function", _method+"方法存在");
+            })
 
-            // $node._$on({
-            //     "mouseout mouseover":function(){
-            //         $(this)._$text("多重+数组赋值mouse")
-            //     },
-            //     "click":function(){
-            //         $(this)._$text("多重+数组赋值click")
-            //     }
-            // })
+            $node._$click(function(){
+                _locals[0]++;
+            })
+            $node._$click()
+
+            equal(_locals[0],1, "可以通过_$click的方式绑定事件和触发事件")
+
+            _locals[1] = 0;
+
+            $node._$click({ //暂时手动测试 事件代理 @UI
+                "li":function(e){
+                    alert("li click")
+                    console.log(e.hello)
+                }
+            })
         })
 
-        test("_$insert、_$insert2、_$bottom...等",function(){
+        module("节点操作")
+        test("节点操作:_$clone等",function(){
+
+            var $mani = $("#mani");
+
+            var $cmani = $mani._$clone();//不深度复制
+
+            notEqual($._$uid($mani[0]), $._$uid($cmani[0]), "节点标示会被重新设置")
+            ok(!$cmani[0].getAttribute("id"), "节点ID被清空")
+            equal($cmani[0].innerHTML, "", "不会复制子节点")
+
+            var $cmani2 = $mani._$clone(true);//不深度复制
+            var $cmaniDl = $cmani2._$children("dl");
+            notEqual($._$uid($mani[0]), $._$uid($cmani[0]), "节点标示会被重新设置")
+            ok(!!$cmaniDl,"会复制子节点")
+            ok(!$cmaniDl[0].getAttribute("id"), "子节点ID也被清空")
+
+        });
+        test("_$insert、_$insert2、_$top2....", function(){
+            var $node = $("#chain2");            
+            var _methods = "bottom top before after bottom2 top2 before2 after2".split(" ");
+
+            // 首先确定所有方法已经都存在了
+            _u._$forEach(_methods, function(_method){
+                ok(typeof $node["_$"+_method] === "function", _method+"方法存在")
+            })
+
+            var $mani = $("#mani");
+            var $maniC = $("#mani-c div") //mani container
+
+            // 分别测试 bottom top before after
+            var $cmani = $mani._$clone(true);
+            var $cmani2 = $mani._$clone(true);
+            var $cmani3 = $mani._$clone(true);
+            var $cmani4 = $mani._$clone(true);
+
+            equal($cmani[0], $mani._$parent()._$bottom($cmani)._$children()._$last(), "复制的节点cmani被插入底部");
+            equal($cmani2[0], $mani._$parent()._$top($cmani2)._$children()._$first(), "复制的节点cmani2被插入顶部");
+            equal($cmani3[0], $mani._$before($cmani3)._$prev()._$first(), "复制的节点cmani3被插入cmani之前");
+            equal($cmani4[0], $mani._$after($cmani4)._$next()._$first(), "复制的节点cmani4被插入cmani之后");
+
+            equal($maniC.length, 2, "要被插入的节点集有两个元素")
+            var $cmani = $mani._$clone(true);
+            $cmani._$insert2($maniC)
+            equal($maniC._$children().length, 2, "两个元素分别被插入了两个节点")
+
+        });
+        test("属性操作", function(){
+            var $node = $("#html-text .content");
+            equal($node._$text("haha"), $node, "$text可链式")
+            equal($node._$text(), "haha", "可取得textContent值")
+            equal($node._$last(true)._$text(), "haha", "多个节点也可以赋值")
+
+            equal($node._$html("haha"), $node, "$html")
+            equal($node._$html(), "haha", "可取得")
+            equal($node._$last(true)._$html(), "haha", "_$html多个节点也可以赋值")
+
+            var $input = $("#html-text")._$children("input,textarea");
+            equal($input._$val("haha"), $input, "$val可链式")
+            equal($input._$val(), "haha", "可取得value")
+            equal($input._$last(true)._$val(), "haha", "多个节点也可以赋值")
 
         })
 
-        test("链式操作", function(){
+        module("链式操作")
+        test("基本操作:UI", function(){
             // 获取 奇数行的代码 设置样式
             var _ret = $("#chainable li:nth-child(odd)")._$style({
                     "background":"#cca",
@@ -251,7 +329,6 @@ var f = function() {
             // 过滤出其中是4倍数的行
             ._$filter(":nth-child(4n)")
                 ._$on("click", function(_e){
-                    var _target = _e.target || _e.srcElement;
                     $(_target)._$setStyle("background", "#111");
                 // hover 样式
                 })
@@ -269,3 +346,4 @@ var f = function() {
 
     }
 define('{pro}util/chainable.js', ['{lib}util/chain/chainable.js'], f);
+
